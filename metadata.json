@@ -1,0 +1,8 @@
+{
+  "name": "YASMINA - Voice Assistant",
+  "description": "A witty and intelligent Egyptian female AI voice assistant.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
