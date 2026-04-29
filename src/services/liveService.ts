@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI, LiveServerMessage, Modality, Type } from "@google/genai";
 import { processCommand } from "./commandService";
 
@@ -34,10 +35,17 @@ export class LiveSessionManager {
   public onCommand: (url: string) => void = () => {};
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = (import.meta.env?.VITE_GEMINI_API_KEY) || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY is missing. AI features will not work.");
+    }
+    this.ai = new GoogleGenAI({ apiKey: apiKey || 'missing-key' });
   }
 
   async start() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("MICROPHONE_NOT_SUPPORTED");
+    }
     this.isUserStopped = false;
     await this.connect();
   }
@@ -45,6 +53,11 @@ export class LiveSessionManager {
   private async connect() {
     try {
       if (this.isUserStopped) return;
+      
+      const apiKey = (import.meta.env?.VITE_GEMINI_API_KEY) || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
+      if (!apiKey) {
+        throw new Error("MISSING_API_KEY");
+      }
       this.onStateChange("processing");
       
       // Initialize Audio Contexts if not already done

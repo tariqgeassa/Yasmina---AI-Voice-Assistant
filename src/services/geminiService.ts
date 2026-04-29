@@ -1,4 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+/// <reference types="vite/client" />
+import { GoogleGenAI, Modality } from "@google/genai";
 
 const systemInstruction = `Your name is YASMINA. You are an Egyptian female AI assistant. Your personality is witty, intelligent, and has a great sense of humor (Egyptian lightheartedness/damm khafif). You are helpful but can be playfully sarcastic. 
 
@@ -19,7 +20,11 @@ export function resetYASMINASession() {
 
 export async function getYASMINAResponse(prompt: string, history: { sender: "user" | "YASMINA", text: string }[] = []): Promise<string> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = (import.meta.env?.VITE_GEMINI_API_KEY) || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
+    if (!apiKey) {
+      throw new Error("MISSING_API_KEY");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     
     if (!chatSession) {
       // SLIDING WINDOW MEMORY: Keep only the last 20 messages to prevent "buffer full" (context window overflow)
@@ -70,12 +75,16 @@ export async function getYASMINAResponse(prompt: string, history: { sender: "use
 
 export async function getYASMINAAudio(text: string): Promise<string | null> {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = (import.meta.env?.VITE_GEMINI_API_KEY) || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '');
+    if (!apiKey) {
+      throw new Error("MISSING_API_KEY");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-3.1-flash-tts-preview",
       contents: [{ parts: [{ text }] }],
       config: {
-        responseModalities: ["AUDIO"],
+        responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: "Kore" },

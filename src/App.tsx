@@ -175,10 +175,13 @@ export default function App() {
     };
   }, []);
 
+  const [errorType, setErrorType] = useState<"microphone" | "api_key" | "unsupported" | null>(null);
+
   const toggleListening = async () => {
     if (isSessionActive) {
       setIsSessionActive(false);
       releaseWakeLock();
+      setErrorType(null);
       if (liveSessionRef.current) {
         liveSessionRef.current.stop();
         liveSessionRef.current = null;
@@ -189,6 +192,7 @@ export default function App() {
       try {
         setIsSessionActive(true);
         resetYASMINASession();
+        setErrorType(null);
         
         const session = new LiveSessionManager();
         session.isMuted = isMuted;
@@ -207,11 +211,18 @@ export default function App() {
             window.open(url, "_blank");
           }, 1000);
         };
-
+ 
         await session.start();
         requestWakeLock();
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to start session", e);
+        if (e.message === "MISSING_API_KEY") {
+          setErrorType("api_key");
+        } else if (e.message === "MICROPHONE_NOT_SUPPORTED") {
+          setErrorType("unsupported");
+        } else {
+          setErrorType("microphone");
+        }
         setShowPermissionModal(true);
         setIsSessionActive(false);
         setAppState("idle");
@@ -232,6 +243,7 @@ export default function App() {
     <div className="h-[100dvh] w-screen bg-[#050505] text-white flex flex-col items-center justify-between font-sans relative overflow-hidden m-0 p-0">
       {showPermissionModal && (
         <PermissionModal 
+          type={errorType || "microphone"}
           onClose={() => setShowPermissionModal(false)} 
         />
       )}
